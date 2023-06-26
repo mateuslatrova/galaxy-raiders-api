@@ -5,10 +5,8 @@ import galaxyraiders.ports.RandomGenerator
 import galaxyraiders.ports.ui.Controller
 import galaxyraiders.ports.ui.Controller.PlayerCommand
 import galaxyraiders.ports.ui.Visualizer
-import java.io.File
 import java.time.LocalTime
 import kotlin.system.measureTimeMillis
-import org.json.JSONArray
 
 const val MILLISECONDS_PER_SECOND: Int = 1000
 
@@ -41,7 +39,7 @@ class GameEngine(
 
   val gameStartTime = LocalTime.now()
 
-  var scoreboard = this.readScoreboard()
+  var lastScoreboard = this.get
 
   fun execute() {
     while (true) {
@@ -123,49 +121,8 @@ class GameEngine(
   }
 
   fun updateScoreboard() {
-    val scoreboardList = this.readBoardJsonFile("core/score/Scoreboard.json")
-    val currentResult = this.getResultForScoreboard()
-    if (this.currentResultWasAlreadyRegistered(scoreboardList)) {
-      scoreboardList.removeAt(scoreboardList.size - 1)
-    }
-    scoreboardList += currentResult
-    this.writeBoardListToJsonFile(scoreboardList, "core/score/Scoreboard.json")
-  }
-
-  fun readBoardJsonFile(filepath: String): MutableList<Map<String, Any>> {
-    val jsonFile = File(filepath)
-    if (jsonFile.length() == 0L) {
-      return mutableListOf<Map<String, Any>>()
-    } else {
-      val jsonString = jsonFile.readText()
-      val jsonArray = JSONArray(jsonString)
-      val boardList: MutableList<Map<String, Any>> = this.convertJSONArrayToListOfDicts(jsonArray)
-      return boardList
-    }
-  }
-
-  fun convertJSONArrayToListOfDicts(jsonArray: JSONArray): MutableList<Map<String, Any>> {
-    val list: MutableList<Map<String, Any>> = mutableListOf()
-    for (i in 0 until jsonArray.length()) {
-      val jsonObject = jsonArray.getJSONObject(i)
-      val keys = jsonObject.keys()
-      val dict: MutableMap<String, Any> = mutableMapOf()
-      while (keys.hasNext()) {
-        val key = keys.next() as String
-        val value = jsonObject.get(key)
-        dict[key] = value
-      }
-      list.add(dict)
-    }
-    return list
-  }
-
-  fun getResultForScoreboard(): MutableMap<String, Any> {
-    val resultDict: MutableMap<String, Any> = mutableMapOf()
-    resultDict["gameStartTime"] = this.gameStartTime
-    resultDict["finalScore"] = this.getCurrentScore()
-    resultDict["asteroidsHit"] = this.getNumberOfHitAsteroids()
-    return resultDict
+    // ler scoreboard.json
+    //
   }
 
   fun getCurrentScore(): Double {
@@ -176,23 +133,6 @@ class GameEngine(
 
   fun getNumberOfHitAsteroids(): Int {
     return this.field.explosions.size
-  }
-
-  fun currentResultWasAlreadyRegistered(scoreboardList: MutableList<Map<String, Any>>): Boolean {
-    val lastResult = scoreboardList.last()
-    if (lastResult["gameStartTime"] == this.gameStartTime) return true else return false
-  }
-
-  fun writeBoardListToJsonFile(boardList: MutableList<Map<String, Any>>, filepath: String) {
-    val jsonFile = File(filepath)
-    jsonFile.writeText(JSONArray(boardList).toString())
-  }
-
-  fun updateLeaderboard() {
-    val scoreboardList = this.readBoardJsonFile("core/score/Scoreboard.json")
-    scoreboardList = mutableListOf(scoreboardList.sortedByDescending { it["finalScore"] })
-    val leaderboardList = scoreboardList.take(3)
-    this.writeBoardListToJsonFile(leaderboardList, "core/score/Leaderboard.json")
   }
 }
 
